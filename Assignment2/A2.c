@@ -262,11 +262,45 @@ int main(void)
             break;
 
         case 2:
-            printf("Backward navigation will be added next.\n");
+            if (isStackEmpty(&backStack) || backStack.top->next == NULL)
+            {
+                printf("No previous page.\n");
+            }
+            else
+            {
+                removedUrl = pop(&backStack);
+
+                if (removedUrl != NULL)
+                {
+                    push(&forwardStack, removedUrl);
+                    free(removedUrl);
+
+                    currentPage = peekStack(&backStack);
+
+                    printf("Current page: %s\n", currentPage);
+                }
+            }
             break;
 
         case 3:
-            printf("Forward navigation will be added next.\n");
+            if (isStackEmpty(&forwardStack))
+            {
+                printf("No forward page.\n");
+            }
+            else
+            {
+                removedUrl = pop(&forwardStack);
+
+                if (removedUrl != NULL)
+                {
+                    push(&backStack, removedUrl);
+                    free(removedUrl);
+
+                    currentPage = peekStack(&backStack);
+
+                    printf("Current page: %s\n", currentPage);
+                }
+            }
             break;
 
         case 4:
