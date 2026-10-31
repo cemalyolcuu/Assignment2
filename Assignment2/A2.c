@@ -183,11 +183,161 @@ char* dequeue(Queue* queue)
 
 int main(void)
 {
-	Stack backStack = { NULL };
-	Stack forwardStack = { NULL };
-	Queue historyQueue = { NULL, NULL };
+    Stack backStack = { NULL };
+    Stack forwardStack = { NULL };
+    Queue historyQueue = { NULL, NULL };
 
-	
+    int choice;
+    int ch;
+    char url[50];
+    char* removedUrl;
+    char* currentPage;
 
-	return 0;
+    while (1)
+    {
+        printf("\nBrowser History Manager\n");
+        printf("1. Visit New Web Page\n");
+        printf("2. Navigate Backward\n");
+        printf("3. Navigate Forward\n");
+        printf("4. Display Current Page\n");
+        printf("5. Browsing History Log (using Queue)\n");
+        printf("6. Exit\n");
+        printf("Enter your choice: ");
+
+        if (scanf_s("%d", &choice) != 1)
+        {
+            printf("Invalid input.\n");
+
+            while ((ch = getchar()) != '\n' && ch != EOF)
+            {
+            }
+
+            if (ch == EOF)
+            {
+                break;
+            }
+
+            continue;
+        }
+
+        while ((ch = getchar()) != '\n' && ch != EOF)
+        {
+        }
+
+        switch (choice)
+        {
+        case 1:
+            printf("Enter URL: ");
+
+            if (fgets(url, sizeof(url), stdin) == NULL)
+            {
+                break;
+            }
+
+            url[strcspn(url, "\n")] = '\0';
+
+            if (strlen(url) == 0)
+            {
+                printf("URL cannot be empty.\n");
+                break;
+            }
+
+            /* Clear forward stack when visiting a new page */
+            while (!isStackEmpty(&forwardStack))
+            {
+                removedUrl = pop(&forwardStack);
+
+                if (removedUrl == NULL)
+                {
+                    break;
+                }
+
+                free(removedUrl);
+            }
+
+            push(&backStack, url);
+            enqueue(&historyQueue, url);
+
+            printf("Page visited: %s\n", url);
+            break;
+
+        case 2:
+            printf("Backward navigation will be added next.\n");
+            break;
+
+        case 3:
+            printf("Forward navigation will be added next.\n");
+            break;
+
+        case 4:
+            currentPage = peekStack(&backStack);
+
+            if (currentPage == NULL)
+            {
+                printf("No current page.\n");
+            }
+            else
+            {
+                printf("Current page: %s\n", currentPage);
+            }
+            break;
+
+        case 5:
+            printf("Browsing history will be added later.\n");
+            break;
+
+        case 6:
+            printf("Exiting browser.\n");
+            break;
+
+        default:
+            printf("Invalid choice. Try again.\n");
+        }
+
+        if (choice == 6)
+        {
+            break;
+        }
+    }
+
+    /* Free back stack */
+    while (!isStackEmpty(&backStack))
+    {
+        removedUrl = pop(&backStack);
+
+        if (removedUrl == NULL)
+        {
+            break;
+        }
+
+        free(removedUrl);
+    }
+
+    /* Free forward stack */
+    while (!isStackEmpty(&forwardStack))
+    {
+        removedUrl = pop(&forwardStack);
+
+        if (removedUrl == NULL)
+        {
+            break;
+        }
+
+        free(removedUrl);
+    }
+
+    /* Free history queue */
+    while (!isQueueEmpty(&historyQueue))
+    {
+        removedUrl = dequeue(&historyQueue);
+
+        if (removedUrl == NULL)
+        {
+            break;
+        }
+
+        free(removedUrl);
+    }
+
+    return 0;
 }
