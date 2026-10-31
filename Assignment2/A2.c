@@ -94,6 +94,46 @@ char* pop(Stack* stack)
 	return url;
 }
 
+QueueNode* createQueueNode(char* url)
+{
+	QueueNode* newNode = (QueueNode*)malloc(sizeof(QueueNode));
+	
+	if (newNode == NULL)
+	{
+		return NULL;
+	}
+
+	if (strlen(url) >= sizeof(newNode->url))
+	{
+		free(newNode);
+		return NULL;
+	}
+	strcpy_s(newNode->url, sizeof(newNode->url), url);
+	newNode->next = NULL;
+
+	return newNode;
+}
+
+void enqueue(Queue* queue, char* newUrl)
+{
+	QueueNode* newNode = createQueueNode(newUrl);
+	if (newNode == NULL)
+	{
+		printf("Cannot add URL to queue.\n");
+		return;
+	}
+	if (queue->front == NULL)
+	{
+		queue->front = newNode;
+		queue->rear = newNode;
+	}
+	else
+	{
+		queue->rear->next = newNode;
+		queue->rear = newNode;
+	}
+}
+
 int main(void)
 {
 	Stack backStack = { NULL };
