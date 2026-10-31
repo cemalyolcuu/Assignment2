@@ -134,6 +134,53 @@ void enqueue(Queue* queue, char* newUrl)
 	}
 }
 
+
+bool isQueueEmpty(Queue* queue)
+{
+	return queue->front == NULL;
+}
+
+char* peekQueue(Queue* queue)
+{
+	if (isQueueEmpty(queue))
+	{
+		return NULL;
+	}
+
+	return queue->front->url;
+}
+
+char* dequeue(Queue* queue)
+{
+	if (isQueueEmpty(queue))
+	{
+		return NULL;
+	}
+
+	QueueNode* temp = queue->front;
+
+	char* url = (char*)malloc(strlen(temp->url) + 1);
+
+	if (url == NULL)
+	{
+		return NULL;
+	}
+
+	strcpy_s(url, strlen(temp->url) + 1, temp->url);
+
+	queue->front = temp->next;
+
+	if (queue->front == NULL)
+	{
+		queue->rear = NULL;
+	}
+
+	free(temp);
+
+	return url;
+}
+
+
 int main(void)
 {
 	Stack backStack = { NULL };
