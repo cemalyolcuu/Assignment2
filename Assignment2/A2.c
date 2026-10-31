@@ -26,12 +26,81 @@ typedef struct Queue
 	QueueNode* rear;
 } Queue;
 
+StackNode* createStackNode(char* url)
+{
+	StackNode* newNode = (StackNode*)malloc(sizeof(StackNode));
+
+	if (newNode == NULL)
+	{
+		return NULL;
+	}
+	strcpy_s(newNode->url, sizeof(newNode->url), url);
+	newNode->next = NULL;
+
+	return newNode;
+}
+
+void push(Stack* stack, char* newUrl)
+{
+	StackNode* newNode = createStackNode(newUrl);
+
+	if (newNode == NULL)
+	{
+		printf("Memory allocation failed.\n");
+		return;
+	}
+
+	newNode->next = stack->top;
+	stack->top = newNode;
+}
+
+bool isStackEmpty(Stack* stack)
+{
+	return stack->top == NULL;
+}
+
+char* peekStack(Stack* stack)
+{
+	if (isStackEmpty(stack))
+	{
+		return NULL;
+	}
+
+	return stack->top->url;
+}
+
+char* pop(Stack* stack)
+{
+	if (isStackEmpty(stack))
+	{
+		return NULL;
+	}
+
+	StackNode* temp = stack->top;
+
+	char* url = (char*)malloc(strlen(temp->url) + 1);
+
+	if (url == NULL)
+	{
+		return NULL;
+	}
+
+	strcpy_s(url, strlen(temp->url) + 1, temp->url);
+
+	stack->top = temp->next;
+
+	free(temp);
+
+	return url;
+}
+
 int main(void)
 {
-
 	Stack backStack = { NULL };
 	Stack forwardStack = { NULL };
 	Queue historyQueue = { NULL, NULL };
+
+	
 
 	return 0;
 }
