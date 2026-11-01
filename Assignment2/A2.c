@@ -34,24 +34,31 @@ StackNode* createStackNode(char* url)
 	{
 		return NULL;
 	}
+    if (strlen(url) >= sizeof(newNode->url))
+    {
+        free(newNode);
+        return NULL;
+    }
+
 	strcpy_s(newNode->url, sizeof(newNode->url), url);
 	newNode->next = NULL;
 
 	return newNode;
 }
 
-void push(Stack* stack, char* newUrl)
+bool push(Stack* stack, char* newUrl)
 {
-	StackNode* newNode = createStackNode(newUrl);
+    StackNode* newNode = createStackNode(newUrl);
 
-	if (newNode == NULL)
-	{
-		printf("Memory allocation failed.\n");
-		return;
-	}
+    if (newNode == NULL)
+    {
+        return false;
+    }
 
-	newNode->next = stack->top;
-	stack->top = newNode;
+    newNode->next = stack->top;
+    stack->top = newNode;
+
+    return true;
 }
 
 bool isStackEmpty(Stack* stack)
@@ -114,24 +121,27 @@ QueueNode* createQueueNode(char* url)
 	return newNode;
 }
 
-void enqueue(Queue* queue, char* newUrl)
+bool enqueue(Queue* queue, char* newUrl)
 {
-	QueueNode* newNode = createQueueNode(newUrl);
-	if (newNode == NULL)
-	{
-		printf("Cannot add URL to queue.\n");
-		return;
-	}
-	if (queue->front == NULL)
-	{
-		queue->front = newNode;
-		queue->rear = newNode;
-	}
-	else
-	{
-		queue->rear->next = newNode;
-		queue->rear = newNode;
-	}
+    QueueNode* newNode = createQueueNode(newUrl);
+
+    if (newNode == NULL)
+    {
+        return false;
+    }
+
+    if (queue->front == NULL)
+    {
+        queue->front = newNode;
+        queue->rear = newNode;
+    }
+    else
+    {
+        queue->rear->next = newNode;
+        queue->rear = newNode;
+    }
+
+    return true;
 }
 
 
@@ -203,42 +213,77 @@ void moveToRear(Queue* queue, char* url)
 {
     QueueNode* current = queue->front;
     QueueNode* previous = NULL;
+    QueueNode* found = NULL;
+    QueueNode* foundPrevious = NULL;
 
     while (current != NULL)
     {
         if (strcmp(current->url, url) == 0)
         {
-            break;
+            found = current;
+            foundPrevious = previous;
         }
 
         previous = current;
         current = current->next;
     }
 
-    if (current == NULL)
+    if (found == NULL)
     {
         return;
     }
 
-    if (current == queue->rear)
+    if (found == queue->rear)
     {
         return;
     }
 
-    if (previous == NULL)
+    if (foundPrevious == NULL)
     {
-        queue->front = current->next;
+        queue->front = found->next;
     }
     else
     {
-        previous->next = current->next;
+        foundPrevious->next = found->next;
     }
 
-    queue->rear->next = current;
-    queue->rear = current;
-    current->next = NULL;
+    queue->rear->next = found;
+    queue->rear = found;
+    found->next = NULL;
 }
 
+void removeTopNode(Stack* stack)
+{
+    if (stack->top == NULL)
+    {
+        return;
+    }
+
+    StackNode* temp = stack->top;
+
+    stack->top = temp->next;
+
+    free(temp);
+}
+
+void removeFrontNode(Queue* queue)
+{
+    if (queue->front == NULL)
+    {
+        return;
+    }
+
+    QueueNode* temp = queue->front;
+
+    queue->front = temp->next;
+
+    if (queue->front == NULL)
+    {
+        queue->rear = NULL;
+    }
+
+    free(temp);
+}
 
 int main(void)
 {
@@ -293,6 +338,22 @@ int main(void)
                 break;
             }
 
+            /* Check if URL is too long */
+            if (strchr(url, '\n') == NULL)
+            {
+                ch = getchar();
+
+                if (ch != '\n' && ch != EOF)
+                {
+                    while ((ch = getchar()) != '\n' && ch != EOF)
+                    {
+                    }
+
+                    printf("URL is too long.\n");
+                    break;
+                }
+            }
+
             url[strcspn(url, "\n")] = '\0';
 
             if (strlen(url) == 0)
@@ -301,21 +362,26 @@ int main(void)
                 break;
             }
 
-            /* Clear forward stack when visiting a new page */
-            while (!isStackEmpty(&forwardStack))
+            /* Add URL to back stack */
+            if (!push(&backStack, url))
             {
-                removedUrl = pop(&forwardStack);
-
-                if (removedUrl == NULL)
-                {
-                    break;
-                }
-
-                free(removedUrl);
+                printf("Cannot visit page. Memory allocation failed.\n");
+                break;
             }
 
-            push(&backStack, url);
-            enqueue(&historyQueue, url);
+            /* Add URL to history queue */
+            if (!enqueue(&historyQueue, url))
+            {
+                removeTopNode(&backStack);
+                printf("Cannot visit page. Memory allocation failed.\n");
+                break;
+            }
+
+            /* Clear forward stack after successful visit */
+            while (!isStackEmpty(&forwardStack))
+            {
+                removeTopNode(&forwardStack);
+            }
 
             printf("Page visited: %s\n", url);
             break;
@@ -327,17 +393,21 @@ int main(void)
             }
             else
             {
-                removedUrl = pop(&backStack);
+                currentPage = peekStack(&backStack);
 
-                if (removedUrl != NULL)
+                if (push(&forwardStack, currentPage))
                 {
-                    push(&forwardStack, removedUrl);
-                    free(removedUrl);
+                    removeTopNode(&backStack);
 
                     currentPage = peekStack(&backStack);
-					moveToRear(&historyQueue, currentPage);
+
+                    moveToRear(&historyQueue, currentPage);
 
                     printf("Current page: %s\n", currentPage);
+                }
+                else
+                {
+                    printf("Cannot go back. Memory allocation failed.\n");
                 }
             }
             break;
@@ -349,17 +419,21 @@ int main(void)
             }
             else
             {
-                removedUrl = pop(&forwardStack);
+                currentPage = peekStack(&forwardStack);
 
-                if (removedUrl != NULL)
+                if (push(&backStack, currentPage))
                 {
-                    push(&backStack, removedUrl);
-                    free(removedUrl);
+                    removeTopNode(&forwardStack);
 
                     currentPage = peekStack(&backStack);
-					moveToRear(&historyQueue, currentPage);
+
+                    moveToRear(&historyQueue, currentPage);
 
                     printf("Current page: %s\n", currentPage);
+                }
+                else
+                {
+                    printf("Cannot go forward. Memory allocation failed.\n");
                 }
             }
             break;
@@ -398,40 +472,19 @@ int main(void)
     /* Free back stack */
     while (!isStackEmpty(&backStack))
     {
-        removedUrl = pop(&backStack);
-
-        if (removedUrl == NULL)
-        {
-            break;
-        }
-
-        free(removedUrl);
+        removeTopNode(&backStack);
     }
 
     /* Free forward stack */
     while (!isStackEmpty(&forwardStack))
     {
-        removedUrl = pop(&forwardStack);
-
-        if (removedUrl == NULL)
-        {
-            break;
-        }
-
-        free(removedUrl);
+        removeTopNode(&forwardStack);
     }
 
     /* Free history queue */
     while (!isQueueEmpty(&historyQueue))
     {
-        removedUrl = dequeue(&historyQueue);
-
-        if (removedUrl == NULL)
-        {
-            break;
-        }
-
-        free(removedUrl);
+        removeFrontNode(&historyQueue);
     }
 
     return 0;
