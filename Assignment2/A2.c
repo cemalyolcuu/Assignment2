@@ -180,6 +180,65 @@ char* dequeue(Queue* queue)
 	return url;
 }
 
+void displayHistory(Queue* queue)
+{
+	QueueNode* current = queue->front;
+
+    if (isQueueEmpty(queue))
+    {
+        printf("Browsing history is empty.\n");
+		return;
+    }
+
+	printf("Browsing History:\n");
+
+    while (current != NULL)
+    {
+        printf("%s\n", current->url);
+        current = current->next;
+    }
+}
+
+void moveToRear(Queue* queue, char* url)
+{
+    QueueNode* current = queue->front;
+    QueueNode* previous = NULL;
+
+    while (current != NULL)
+    {
+        if (strcmp(current->url, url) == 0)
+        {
+            break;
+        }
+
+        previous = current;
+        current = current->next;
+    }
+
+    if (current == NULL)
+    {
+        return;
+    }
+
+    if (current == queue->rear)
+    {
+        return;
+    }
+
+    if (previous == NULL)
+    {
+        queue->front = current->next;
+    }
+    else
+    {
+        previous->next = current->next;
+    }
+
+    queue->rear->next = current;
+    queue->rear = current;
+    current->next = NULL;
+}
+
 
 int main(void)
 {
@@ -276,6 +335,7 @@ int main(void)
                     free(removedUrl);
 
                     currentPage = peekStack(&backStack);
+					moveToRear(&historyQueue, currentPage);
 
                     printf("Current page: %s\n", currentPage);
                 }
@@ -297,6 +357,7 @@ int main(void)
                     free(removedUrl);
 
                     currentPage = peekStack(&backStack);
+					moveToRear(&historyQueue, currentPage);
 
                     printf("Current page: %s\n", currentPage);
                 }
@@ -317,7 +378,7 @@ int main(void)
             break;
 
         case 5:
-            printf("Browsing history will be added later.\n");
+			displayHistory(&historyQueue);
             break;
 
         case 6:
